@@ -1,23 +1,25 @@
 from flask import Flask, request, send_file
 import edge_tts
 import asyncio
+import uuid
+
 
 app = Flask(__name__)
 
-@app.route("/tts")
+@app.route("/tts", methods=["GET"])
 def tts():
-    text = request.args.get("text", "")
-    voice = "en-US-DavisNeural"
-    path = "output.mp3"
+    text = request.args.get("text", "Hello there!")
+    voice = request.args.get("voice", "en-US-DavisNeural")
 
-    async def generate():
+    # create a unique filename per request
+    output_file = f"output_{uuid.uuid4()}.mp3"
+
+    async def _main():
         communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(path)
+        await communicate.save(output_file)
 
-    asyncio.run(generate())
-    return send_file(path)
+    asyncio.run(_main())
+    return send_file(output_file, as_attachment=True)
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
 
 
