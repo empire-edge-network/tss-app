@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route("/tts")
 def tts():
     text = request.args.get("text", "")
-    voice = "en-US-GuyNeural"
+    voice = "en-US-DavisNeural"
     path = "output.mp3"
 
     async def generate():
@@ -19,4 +19,5 @@ def tts():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
