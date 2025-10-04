@@ -16,7 +16,7 @@ def home():
 # TTS endpoint
 @app.route("/tts", methods=["GET"])
 def tts():
-    raw_text = request.args.get("text", "Hello there!")
+    raw_text = request.args.get("text")
     voice = request.args.get("voice", "en-US-DavisNeural")
     output_file = f"output_{uuid.uuid4()}.mp3"
 
@@ -41,3 +41,4 @@ def tts():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
