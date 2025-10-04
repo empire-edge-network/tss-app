@@ -31,5 +31,9 @@ def tts():
     return send_file(output_file, as_attachment=True)
 
 # Run Flask app (Render will handle the server)
+import os
+
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))  # Render provides PORT env variable
+    app.run(host="0.0.0.0", port=port)
+
