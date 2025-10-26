@@ -1,8 +1,9 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 import edge_tts
 import asyncio
 import uuid
 import os
+import base64
 
 app = Flask(__name__)
 
@@ -16,16 +17,15 @@ def tts():
         data = request.get_json(force=True)
         text = data.get("text", "").strip()
         if not text:
-            return "Error: No text provided", 400
+            return jsonify({"error": "No text provided"}), 400
 
         voice = data.get("voice", "en-US-DavisNeural")
-        # Save in /tmp for Render compatibility
         output_file = f"/tmp/output_{uuid.uuid4()}.mp3"
 
-        # Clean text: remove Markdown, special characters, and line breaks
+        # Clean text
         text_clean = (
             text.replace("```", "")
-                .replace("‘", "'").replace("’", "'")
+                .replace("‘", "'").replace("'", "'")
                 .replace("“", '"').replace("”", '"')
                 .replace("*", "")
                 .replace("—", "-")
@@ -33,7 +33,6 @@ def tts():
                 .strip()
         )
 
-        # Ensure minimum length
         if len(text_clean) < 50:
             text_clean += " This extra text ensures TTS can generate audio."
 
@@ -44,13 +43,22 @@ def tts():
         loop.run_until_complete(communicate.save(output_file))
         loop.close()
 
-        # Send file and delete after sending
-        response = send_file(output_file, as_attachment=True)
+        # Read audio file and encode to base64
+        with open(output_file, "rb") as audio_file:
+            audio_data = base64.b64encode(audio_file.read()).decode('utf-8')
+        
+        # Clean up
         os.remove(output_file)
-        return response
+        
+        # Return JSON with base64 audio data
+        return jsonify({
+            "success": True,
+            "audio_data": audio_data,
+            "text_length": len(text_clean)
+        })
 
     except Exception as e:
-        return f"TTS generation failed: {e}", 500
+        return jsonify({"error": f"TTS generation failed: {str(e)}"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
